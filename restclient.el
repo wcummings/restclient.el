@@ -216,21 +216,23 @@
          (body-file (make-temp-file "restclient"))
          (args (list url-request-method
                      url
-                     (format "@%s" body-file))))
+                     (format "@%s" body-file)
+                     ((full-buffer-name (format "*%s*" buffer)))))
     (when header-string
       (setq args (cons header-string args)))
+
     (with-temp-file body-file
       (insert url-request-data))
+
+    (when (get-buffer full-buffer-name)
+      (kill-buffer full-buffer-name))
     (message (mapconcat 'identity args " "))
-    (let ((full-buffer-name (format "*%s*" buffer)))
-      (when (get-buffer full-buffer-name)
-        (kill-buffer full-buffer-name)))
-      (let ((process-buffer (apply 'make-comint
-                                   buffer
-                                   restclient-httpie-command
-                                   nil
-                                   args)))
-        (switch-to-buffer process-buffer))))
+    (let ((process-buffer (apply 'make-comint
+                                 buffer
+                                 restclient-httpie-command
+                                 nil
+                                 args)))
+      (switch-to-buffer process-buffer)))))
 
 (defun httpie-make-header-string (headers)
   (mapcar (lambda (header)
