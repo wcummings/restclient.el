@@ -25,6 +25,11 @@
   "An interactive HTTP client for Emacs."
   :group 'tools)
 
+(defcustom restclient-httpie-command "/usr/local/bin/hshttp"
+  "Command to use for httpie"
+  :group 'restclient
+  :type 'string)
+
 (defcustom restclient-log-request t
   "Log restclient requests to *Messages*."
   :group 'restclient
@@ -202,10 +207,28 @@
     (setq restclient-within-call t)
     (setq restclient-request-time-start (current-time))
     (run-hooks 'restclient-http-do-hook)
-    (url-retrieve url 'restclient-http-handle-response
-                  (append (list method url (if restclient-same-buffer-response
-                                               restclient-same-buffer-response-name
-                                             (format "*HTTP %s %s*" method url))) handle-args) nil restclient-inhibit-cookies)))
+    (httpie-retrieve url (if restclient-same-buffer-response
+                             restclient-same-buffer-response-name
+                           (format "HTTP %s %s" method url)))))
+
+(defun httpie-retrieve (url buffer)
+  (let ((header-string (httpie-make-header-string url-request-extra-headers))
+         (args (list url-request-method
+                     url
+                     (format "body='%s'" url-request-data))))
+    (when header-string
+      (setq args (cons header-string args)))
+    (message (mapconcat 'identity args " "))
+    (apply 'make-comint
+           buffer
+           restclient-httpie-command
+           nil
+           args)))
+
+(defun httpie-make-header-string (headers)
+  (mapcar (lambda (header)
+            (concat (car header) ":" (cdr header) ";"))
+          headers))
 
 (defun restclient-prettify-response (method url)
   (save-excursion
