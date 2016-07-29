@@ -40,7 +40,7 @@
   :group 'restclient
   :type 'boolean)
 
-(defcustom restclient-same-buffer-response-name "*HTTP Response*"
+(defcustom restclient-same-buffer-response-name "HTTP Response"
   "Name for response buffer."
   :group 'restclient
   :type 'string)
@@ -219,11 +219,16 @@
     (when header-string
       (setq args (cons header-string args)))
     (message (mapconcat 'identity args " "))
-    (apply 'make-comint
-           buffer
-           restclient-httpie-command
-           nil
-           args)))
+    (let ((full-buffer-name (format "*%s*" buffer)))
+      (when (get-buffer full-buffer-name)
+        (kill-buffer full-buffer-name)))
+    (let ((process-buffer (apply 'make-comint
+                                 buffer
+                                 restclient-httpie-command
+                                 nil
+                                 args)))
+      (switch-to-buffer process-buffer))))
+
 
 (defun httpie-make-header-string (headers)
   (mapcar (lambda (header)
