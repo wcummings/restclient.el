@@ -212,22 +212,25 @@
                            (format "HTTP %s %s" method url)))))
 
 (defun httpie-retrieve (url buffer)
-  (let ((header-string (httpie-make-header-string url-request-extra-headers))
+  (let* ((header-string (httpie-make-header-string url-request-extra-headers))
+         (body-file (make-temp-file "restclient"))
          (args (list url-request-method
                      url
-                     (format "body='%s'" url-request-data))))
+                     (format "@%s" body-file))))
     (when header-string
       (setq args (cons header-string args)))
+    (with-temp-file body-file
+      (insert url-request-data))
     (message (mapconcat 'identity args " "))
     (let ((full-buffer-name (format "*%s*" buffer)))
       (when (get-buffer full-buffer-name)
         (kill-buffer full-buffer-name)))
-    (let ((process-buffer (apply 'make-comint
-                                 buffer
-                                 restclient-httpie-command
-                                 nil
-                                 args)))
-      (switch-to-buffer process-buffer))))
+      (let ((process-buffer (apply 'make-comint
+                                   buffer
+                                   restclient-httpie-command
+                                   nil
+                                   args)))
+        (switch-to-buffer process-buffer))))
 
 (defun httpie-make-header-string (headers)
   (mapcar (lambda (header)
