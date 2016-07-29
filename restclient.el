@@ -229,7 +229,6 @@
                                  args)))
       (switch-to-buffer process-buffer))))
 
-
 (defun httpie-make-header-string (headers)
   (mapcar (lambda (header)
             (concat (car header) ":" (cdr header) ";"))
